@@ -28,15 +28,19 @@ fn mandelbrot_precise(cr: Float, ci: Float, iterations: u32) -> u32 {
 	}
 	iterations
 }
-fn mix(x: f32, y: f32, a: f32) -> f32 {
+fn mix(x: f64, y: f64, a: f64) -> f64 {
 	x * (1.0 - a) + y * a
 }
-pub fn run(iterations: u32, x: u32, y: u32, width: u32, height: u32, extents: Extents) -> [u8; 3] {
-	let scaled_x = mix(extents.hmin as f32, extents.hmax as f32, (x as f32) / (width as f32));
-	let scaled_y = mix(extents.vmin as f32, extents.vmax as f32, (y as f32) / (height as f32));
-	let i = mandelbrot(scaled_x, scaled_y, iterations);
+pub fn run(iterations: u32, x: u32, y: u32, width: u32, height: u32, extents: Extents, precise: bool) -> [u8; 3] {
+	let scaled_x = mix(extents.hmin, extents.hmax, (x as f64) / (width as f64));
+	let scaled_y = mix(extents.vmin, extents.vmax, (y as f64) / (height as f64));
+	let i = if precise {
+		mandelbrot_precise(Float::from(scaled_x), Float::from(scaled_y), iterations)
+	} else {
+		mandelbrot(scaled_x as f32, scaled_y as f32, iterations)
+	};
 
-	let h = mix(0.0, 359.0, (i as f32) / (iterations as f32));
+	let h = mix(0.0, 359.0, (i as f64) / (iterations as f64));
 
 	let hp = h / 60.0;
 	let z = 1.0 - (hp % 2.0 - 1.0).abs();

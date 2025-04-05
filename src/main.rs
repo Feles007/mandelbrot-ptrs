@@ -25,6 +25,7 @@ async fn main() {
 		center_y: 0.0,
 		scale: 1.0,
 		iterations: 1024,
+		precise: false,
 	};
 
 	let mut screen_buffer = ScreenBuffer::new();
@@ -49,7 +50,7 @@ async fn main() {
 				let x = (index as u32) % width;
 				let y = (index as u32) / width;
 
-				let result = mandelbrot::run(parameters.iterations, x, y, width, height, extents);
+				let result = mandelbrot::run(parameters.iterations, x, y, width, height, extents, parameters.precise);
 
 				slice[0] = result[0];
 				slice[1] = result[1];
