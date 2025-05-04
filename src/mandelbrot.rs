@@ -11,23 +11,7 @@ pub enum Precision {
 fn mix(x: f64, y: f64, a: f64) -> f64 {
 	x * (1.0 - a) + y * a
 }
-pub fn run(
-	iterations: u32,
-	x: u32,
-	y: u32,
-	width: u32,
-	height: u32,
-	extents: Extents,
-	precision: Precision,
-) -> [u8; 3] {
-	let scaled_x = mix(extents.hmin, extents.hmax, (x as f64) / (width as f64));
-	let scaled_y = mix(extents.vmin, extents.vmax, (y as f64) / (height as f64));
-	let i = match precision {
-		Precision::F32 => mandelbrot_f32(scaled_x as f32, scaled_y as f32, iterations),
-		Precision::F64 => mandelbrot_f64(scaled_x, scaled_y, iterations),
-		Precision::Arbitrary => mandelbrot_precise(Float::from(scaled_x), Float::from(scaled_y), iterations),
-	};
-
+fn get_color(iterations: u32, i: u32) -> [u8; 3] {
 	let h = mix(0.0, 359.0, (i as f64) / (iterations as f64));
 
 	let hp = h / 60.0;
@@ -66,6 +50,25 @@ pub fn run(
 	} // r 1->0
 
 	[(r * 255.999) as u8, (g * 255.999) as u8, (b * 255.999) as u8]
+}
+pub fn run(
+	iterations: u32,
+	x: u32,
+	y: u32,
+	width: u32,
+	height: u32,
+	extents: Extents,
+	precision: Precision,
+) -> [u8; 3] {
+	let scaled_x = mix(extents.hmin, extents.hmax, (x as f64) / (width as f64));
+	let scaled_y = mix(extents.vmin, extents.vmax, (y as f64) / (height as f64));
+	let i = match precision {
+		Precision::F32 => mandelbrot_f32(scaled_x as f32, scaled_y as f32, iterations),
+		Precision::F64 => mandelbrot_f64(scaled_x, scaled_y, iterations),
+		Precision::Arbitrary => mandelbrot_precise(Float::from(scaled_x), Float::from(scaled_y), iterations),
+	};
+
+	get_color(iterations, i)
 }
 
 fn mandelbrot_f32(cr: f32, ci: f32, iterations: u32) -> u32 {
