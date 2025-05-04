@@ -1,6 +1,6 @@
 use crate::parameters::Extents;
-use malachite_base::num::basic::traits::{Two, Zero};
-use malachite_float::Float;
+use malachite::base::num::basic::traits::{Two, Zero};
+use malachite::Float;
 
 #[derive(Copy, Clone)]
 pub enum Precision {
