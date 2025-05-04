@@ -1,4 +1,5 @@
 use crate::parameters::Extents;
+use malachite_base::num::basic::traits::{Two, Zero};
 use malachite_float::Float;
 
 fn mandelbrot(cr: f32, ci: f32, iterations: u32) -> u32 {
@@ -15,15 +16,14 @@ fn mandelbrot(cr: f32, ci: f32, iterations: u32) -> u32 {
 	iterations
 }
 fn mandelbrot_precise(cr: Float, ci: Float, iterations: u32) -> u32 {
-	let two = Float::from(2);
-	let mut x = Float::from(0);
-	let mut y = Float::from(0);
+	let mut x = Float::ZERO;
+	let mut y = Float::ZERO;
 	for i in 0..iterations {
 		if x.clone() * x.clone() + y.clone() * y.clone() > 4.0 {
 			return i;
 		}
 		let new_x = x.clone() * x.clone() - y.clone() * y.clone() + cr.clone();
-		y = two.clone() * x * y + ci.clone();
+		y = Float::TWO * x * y + ci.clone();
 		x = new_x;
 	}
 	iterations
