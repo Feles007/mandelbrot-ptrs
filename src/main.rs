@@ -2,6 +2,7 @@ mod mandelbrot;
 mod parameters;
 mod screen_buffer;
 
+use crate::mandelbrot::Precision;
 use crate::parameters::Parameters;
 use crate::screen_buffer::ScreenBuffer;
 use macroquad::miniquad::conf::Platform;
@@ -25,7 +26,7 @@ async fn main() {
 		center_y: 0.0,
 		scale: 1.0,
 		iterations: 1024,
-		precise: false,
+		precision: Precision::F32,
 	};
 
 	let mut screen_buffer = ScreenBuffer::new();
@@ -50,7 +51,15 @@ async fn main() {
 				let x = (index as u32) % width;
 				let y = (index as u32) / width;
 
-				let result = mandelbrot::run(parameters.iterations, x, y, width, height, extents, parameters.precise);
+				let result = mandelbrot::run(
+					parameters.iterations,
+					x,
+					y,
+					width,
+					height,
+					extents,
+					parameters.precision,
+				);
 
 				slice[0] = result[0];
 				slice[1] = result[1];

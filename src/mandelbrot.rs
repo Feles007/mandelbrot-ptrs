@@ -2,42 +2,30 @@ use crate::parameters::Extents;
 use malachite_base::num::basic::traits::{Two, Zero};
 use malachite_float::Float;
 
-fn mandelbrot(cr: f32, ci: f32, iterations: u32) -> u32 {
-	let mut x = 0.0;
-	let mut y = 0.0;
-	for i in 0..iterations {
-		if x * x + y * y > 4.0 {
-			return i;
-		}
-		let new_x = x * x - y * y + cr;
-		y = 2.0 * x * y + ci;
-		x = new_x;
-	}
-	iterations
-}
-fn mandelbrot_precise(cr: Float, ci: Float, iterations: u32) -> u32 {
-	let mut x = Float::ZERO;
-	let mut y = Float::ZERO;
-	for i in 0..iterations {
-		if x.clone() * x.clone() + y.clone() * y.clone() > 4.0 {
-			return i;
-		}
-		let new_x = x.clone() * x.clone() - y.clone() * y.clone() + cr.clone();
-		y = Float::TWO * x * y + ci.clone();
-		x = new_x;
-	}
-	iterations
+#[derive(Copy, Clone)]
+pub enum Precision {
+	F32,
+	F64,
+	Arbitrary,
 }
 fn mix(x: f64, y: f64, a: f64) -> f64 {
 	x * (1.0 - a) + y * a
 }
-pub fn run(iterations: u32, x: u32, y: u32, width: u32, height: u32, extents: Extents, precise: bool) -> [u8; 3] {
+pub fn run(
+	iterations: u32,
+	x: u32,
+	y: u32,
+	width: u32,
+	height: u32,
+	extents: Extents,
+	precision: Precision,
+) -> [u8; 3] {
 	let scaled_x = mix(extents.hmin, extents.hmax, (x as f64) / (width as f64));
 	let scaled_y = mix(extents.vmin, extents.vmax, (y as f64) / (height as f64));
-	let i = if precise {
-		mandelbrot_precise(Float::from(scaled_x), Float::from(scaled_y), iterations)
-	} else {
-		mandelbrot(scaled_x as f32, scaled_y as f32, iterations)
+	let i = match precision {
+		Precision::F32 => mandelbrot_f32(scaled_x as f32, scaled_y as f32, iterations),
+		Precision::F64 => mandelbrot_f64(scaled_x, scaled_y, iterations),
+		Precision::Arbitrary => mandelbrot_precise(Float::from(scaled_x), Float::from(scaled_y), iterations),
 	};
 
 	let h = mix(0.0, 359.0, (i as f64) / (iterations as f64));
@@ -78,4 +66,44 @@ pub fn run(iterations: u32, x: u32, y: u32, width: u32, height: u32, extents: Ex
 	} // r 1->0
 
 	[(r * 255.999) as u8, (g * 255.999) as u8, (b * 255.999) as u8]
+}
+
+fn mandelbrot_f32(cr: f32, ci: f32, iterations: u32) -> u32 {
+	let mut x = 0.0;
+	let mut y = 0.0;
+	for i in 0..iterations {
+		if x * x + y * y > 4.0 {
+			return i;
+		}
+		let new_x = x * x - y * y + cr;
+		y = 2.0 * x * y + ci;
+		x = new_x;
+	}
+	iterations
+}
+fn mandelbrot_f64(cr: f64, ci: f64, iterations: u32) -> u32 {
+	let mut x = 0.0;
+	let mut y = 0.0;
+	for i in 0..iterations {
+		if x * x + y * y > 4.0 {
+			return i;
+		}
+		let new_x = x * x - y * y + cr;
+		y = 2.0 * x * y + ci;
+		x = new_x;
+	}
+	iterations
+}
+fn mandelbrot_precise(cr: Float, ci: Float, iterations: u32) -> u32 {
+	let mut x = Float::ZERO;
+	let mut y = Float::ZERO;
+	for i in 0..iterations {
+		if x.clone() * x.clone() + y.clone() * y.clone() > 4.0 {
+			return i;
+		}
+		let new_x = x.clone() * x.clone() - y.clone() * y.clone() + cr.clone();
+		y = Float::TWO * x * y + ci.clone();
+		x = new_x;
+	}
+	iterations
 }

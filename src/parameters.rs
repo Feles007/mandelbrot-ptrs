@@ -1,3 +1,4 @@
+use crate::mandelbrot::Precision;
 use macroquad::input::{is_key_down, is_key_pressed, KeyCode};
 use macroquad::prelude::get_frame_time;
 
@@ -6,7 +7,7 @@ pub struct Parameters {
 	pub center_y: f64,
 	pub scale: f64,
 	pub iterations: u32,
-	pub precise: bool,
+	pub precision: Precision,
 }
 impl Parameters {
 	pub fn update(&mut self) {
@@ -43,8 +44,12 @@ impl Parameters {
 			self.scale /= scale_factor;
 		}
 
-		if is_key_pressed(KeyCode::Space) {
-			self.precise = !self.precise;
+		if is_key_pressed(KeyCode::Key1) {
+			self.precision = Precision::F32;
+		} else if is_key_pressed(KeyCode::Key2) {
+			self.precision = Precision::F64;
+		} else if is_key_pressed(KeyCode::Key3) {
+			self.precision = Precision::Arbitrary;
 		}
 	}
 	pub fn extents(&self, width: u32, height: u32) -> Extents {
