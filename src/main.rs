@@ -42,12 +42,11 @@ async fn main() {
 		let height = screen_buffer.height();
 
 		let extents = parameters.extents(width, height);
-
 		screen_buffer
 			.buffer
-			.par_chunks_exact_mut(4)
+			.par_iter_mut()
 			.enumerate()
-			.for_each(|(index, slice)| {
+			.for_each(|(index, pixel)| {
 				let x = (index as u32) % width;
 				let y = (index as u32) / width;
 
@@ -61,10 +60,9 @@ async fn main() {
 					parameters.precision,
 				);
 
-				slice[0] = result[0];
-				slice[1] = result[1];
-				slice[2] = result[2];
-				slice[3] = 255;
+				pixel.r = result[0];
+				pixel.g = result[1];
+				pixel.b = result[2];
 			});
 
 		screen_buffer.draw();

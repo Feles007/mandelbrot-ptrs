@@ -7,6 +7,7 @@ edition = "2021"
 macroquad = "0.4.13"
 malachite = { version = "0.6.0", features = ["floats"] }
 rayon = "1.10.0"
+bytemuck = { version = "1.23.0", features = ["derive"] }
 
 [profile.release]
-debug = true
+#debug = true
