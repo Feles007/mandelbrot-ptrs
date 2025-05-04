@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 macroquad = "0.4.13"
-malachite = { version = "0.5.0", features = ["floats"] }
+malachite = { version = "0.6.0", features = ["floats"] }
 rayon = "1.10.0"
 
 [profile.release]
