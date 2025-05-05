@@ -100,12 +100,15 @@ fn mandelbrot_f64(cr: f64, ci: f64, iterations: u32) -> u32 {
 fn mandelbrot_precise(cr: Float, ci: Float, iterations: u32) -> u32 {
 	let mut x = Float::ZERO;
 	let mut y = Float::ZERO;
+
 	for i in 0..iterations {
-		if x.clone() * x.clone() + y.clone() * y.clone() > 4.0 {
+		let x2 = &x * &x;
+		let y2 = &y * &y;
+		if &x2 + &y2 > 4 {
 			return i;
 		}
-		let new_x = x.clone() * x.clone() - y.clone() * y.clone() + cr.clone();
-		y = Float::TWO * x * y + ci.clone();
+		let new_x = x2 - y2 + &cr;
+		y = Float::TWO * x * y + &ci;
 		x = new_x;
 	}
 	iterations
