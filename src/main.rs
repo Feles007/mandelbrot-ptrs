@@ -83,8 +83,14 @@ async fn main() {
 
 		let lines = [
 			format!("FPS: {}", 1.0 / get_frame_time()),
-			format!("X: {}", parameters.center_x),
-			format!("Y: {}", parameters.center_y),
+			format!(
+				"X: {}",
+				f64::rounding_from(&parameters.center_x, RoundingMode::Nearest).0
+			),
+			format!(
+				"Y: {}",
+				f64::rounding_from(&parameters.center_y, RoundingMode::Nearest).0
+			),
 			format!("S: {}x", u64::rounding_from(&parameters.scale, RoundingMode::Nearest).0),
 			format!("I: {}", parameters.iterations),
 		];
