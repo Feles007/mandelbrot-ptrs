@@ -30,11 +30,11 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
 	let mut parameters = Parameters {
-		center_x: Float::from(-0.5),
+		center_x: Float::from(-1.5),
 		center_y: Float::from(0.0),
-		scale: Float::from(1.0),
+		scale: Float::from(100000000000000.0),
 		iterations: 1024,
-		precision: Precision::F32,
+		precision: Precision::F64,
 	};
 
 	let float_precision = 1024;
