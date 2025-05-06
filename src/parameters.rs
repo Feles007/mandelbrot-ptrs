@@ -1,6 +1,7 @@
 use crate::mandelbrot::Precision;
 use macroquad::input::{is_key_down, is_key_pressed, KeyCode};
 use macroquad::prelude::get_frame_time;
+use malachite::base::num::arithmetic::traits::Reciprocal;
 use malachite::base::num::basic::traits::One;
 use malachite::base::num::conversion::traits::RoundingFrom;
 use malachite::base::rounding_modes::RoundingMode;
@@ -57,24 +58,22 @@ impl Parameters {
 		}
 	}
 	pub fn extents(&self, width: u32, height: u32) -> Extents {
-		let scale = f64::rounding_from(&self.scale, RoundingMode::Nearest).0;
-		let center_x = f64::rounding_from(&self.center_x, RoundingMode::Nearest).0;
-		let center_y = f64::rounding_from(&self.center_y, RoundingMode::Nearest).0;
+		let vmax = (&self.scale).reciprocal();
+		let vmin = -&vmax;
 
-		let vmin = -scale.recip();
-		let vmax = scale.recip();
-		let ratio = width as f64 / height as f64;
-		let hmin = vmin * ratio + center_x;
-		let hmax = vmax * ratio + center_x;
+		let ratio = Float::from(width) / Float::from(height);
 
-		let offset_vmin = vmin + center_y;
-		let offset_vmax = vmax + center_y;
+		let hmin = &vmin * &ratio + &self.center_x;
+		let hmax = &vmax * ratio + &self.center_x;
+
+		let offset_vmin = vmin + &self.center_y;
+		let offset_vmax = vmax + &self.center_y;
 
 		Extents {
-			vmin: offset_vmin,
-			vmax: offset_vmax,
-			hmin,
-			hmax,
+			vmin: f64::rounding_from(offset_vmin, RoundingMode::Nearest).0,
+			vmax: f64::rounding_from(offset_vmax, RoundingMode::Nearest).0,
+			hmin: f64::rounding_from(hmin, RoundingMode::Nearest).0,
+			hmax: f64::rounding_from(hmax, RoundingMode::Nearest).0,
 		}
 	}
 }
