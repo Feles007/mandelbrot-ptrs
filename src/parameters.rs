@@ -1,24 +1,28 @@
 use crate::mandelbrot::Precision;
 use macroquad::input::{is_key_down, is_key_pressed, KeyCode};
 use macroquad::prelude::get_frame_time;
+use malachite::base::num::basic::traits::One;
+use malachite::base::num::conversion::traits::RoundingFrom;
+use malachite::base::rounding_modes::RoundingMode;
+use malachite::Float;
 
 pub struct Parameters {
-	pub center_x: f64,
-	pub center_y: f64,
-	pub scale: f64,
+	pub center_x: Float,
+	pub center_y: Float,
+	pub scale: Float,
 	pub iterations: u32,
 	pub precision: Precision,
 }
 impl Parameters {
 	pub fn update(&mut self) {
-		let delta = get_frame_time() as f64;
+		let delta = Float::from(get_frame_time());
 
-		let movement = delta * (1.0 / self.scale);
+		let movement = &delta * (Float::ONE / &self.scale);
 
 		if is_key_down(KeyCode::Up) {
-			self.center_y -= movement;
+			self.center_y -= &movement;
 		} else if is_key_down(KeyCode::Down) {
-			self.center_y += movement;
+			self.center_y += &movement;
 		}
 
 		if is_key_down(KeyCode::Left) {
@@ -36,7 +40,7 @@ impl Parameters {
 			self.iterations *= 2;
 		}
 
-		let scale_factor = 1.0 + delta;
+		let scale_factor = Float::ONE + delta;
 
 		if is_key_down(KeyCode::Z) {
 			self.scale *= scale_factor;
@@ -53,16 +57,18 @@ impl Parameters {
 		}
 	}
 	pub fn extents(&self, width: u32, height: u32) -> Extents {
-		let x_offset = -0.5;
+		let scale = f64::rounding_from(&self.scale, RoundingMode::Nearest).0;
+		let center_x = f64::rounding_from(&self.center_x, RoundingMode::Nearest).0;
+		let center_y = f64::rounding_from(&self.center_y, RoundingMode::Nearest).0;
 
-		let vmin = -1.15 * (1.0 / self.scale);
-		let vmax = 1.15 * (1.0 / self.scale);
+		let vmin = -scale.recip();
+		let vmax = scale.recip();
 		let ratio = width as f64 / height as f64;
-		let hmin = vmin * ratio + x_offset + self.center_x;
-		let hmax = vmax * ratio + x_offset + self.center_x;
+		let hmin = vmin * ratio + center_x;
+		let hmax = vmax * ratio + center_x;
 
-		let offset_vmin = vmin + self.center_y;
-		let offset_vmax = vmax + self.center_y;
+		let offset_vmin = vmin + center_y;
+		let offset_vmax = vmax + center_y;
 
 		Extents {
 			vmin: offset_vmin,

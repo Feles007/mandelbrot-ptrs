@@ -7,6 +7,9 @@ use crate::parameters::Parameters;
 use crate::screen_buffer::ScreenBuffer;
 use macroquad::miniquad::conf::Platform;
 use macroquad::prelude::*;
+use malachite::base::num::conversion::traits::RoundingFrom;
+use malachite::base::rounding_modes::RoundingMode;
+use malachite::Float;
 use rayon::prelude::*;
 
 use mimalloc::MiMalloc;
@@ -27,12 +30,18 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
 	let mut parameters = Parameters {
-		center_x: 0.0,
-		center_y: 0.0,
-		scale: 1.0,
+		center_x: Float::from(-0.5),
+		center_y: Float::from(0.0),
+		scale: Float::from(1.0),
 		iterations: 1024,
 		precision: Precision::F32,
 	};
+
+	let float_precision = 1024;
+
+	parameters.center_x.set_prec(float_precision);
+	parameters.center_y.set_prec(float_precision);
+	parameters.scale.set_prec(float_precision);
 
 	let mut screen_buffer = ScreenBuffer::new();
 
@@ -76,7 +85,7 @@ async fn main() {
 			format!("FPS: {}", 1.0 / get_frame_time()),
 			format!("X: {}", parameters.center_x),
 			format!("Y: {}", parameters.center_y),
-			format!("S: {}x", parameters.scale as u64),
+			format!("S: {}x", u64::rounding_from(&parameters.scale, RoundingMode::Nearest).0),
 			format!("I: {}", parameters.iterations),
 		];
 
