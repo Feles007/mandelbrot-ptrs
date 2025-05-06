@@ -9,6 +9,11 @@ use macroquad::miniquad::conf::Platform;
 use macroquad::prelude::*;
 use rayon::prelude::*;
 
+use mimalloc::MiMalloc;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 fn window_conf() -> Conf {
 	Conf {
 		window_title: "Window name".to_owned(),
