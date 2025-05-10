@@ -7,7 +7,7 @@ use malachite::base::rounding_modes::RoundingMode;
 use malachite::Float;
 
 #[derive(Copy, Clone)]
-pub enum Precision {
+pub enum Method {
 	F32,
 	F64,
 	Arbitrary,
@@ -18,7 +18,7 @@ pub struct Parameters {
 	pub center_y: Float,
 	pub scale: Float,
 	pub iterations: u32,
-	pub precision: Precision,
+	pub method: Method,
 }
 impl Parameters {
 	pub fn update(&mut self) {
@@ -56,13 +56,13 @@ impl Parameters {
 		}
 
 		if is_key_pressed(KeyCode::Key1) {
-			self.precision = Precision::F32;
+			self.method = Method::F32;
 		} else if is_key_pressed(KeyCode::Key2) {
-			self.precision = Precision::F64;
+			self.method = Method::F64;
 		} else if is_key_pressed(KeyCode::Key3) {
-			self.precision = Precision::Arbitrary;
+			self.method = Method::Arbitrary;
 		} else if is_key_pressed(KeyCode::Key4) {
-			self.precision = Precision::Testing;
+			self.method = Method::Testing;
 		}
 	}
 	pub fn extents(&self, width: u32, height: u32) -> Extents {
