@@ -1,4 +1,3 @@
-use crate::mandelbrot::Precision;
 use macroquad::input::{is_key_down, is_key_pressed, KeyCode};
 use macroquad::prelude::get_frame_time;
 use malachite::base::num::arithmetic::traits::Reciprocal;
@@ -7,6 +6,12 @@ use malachite::base::num::conversion::traits::RoundingFrom;
 use malachite::base::rounding_modes::RoundingMode;
 use malachite::Float;
 
+#[derive(Copy, Clone)]
+pub enum Precision {
+	F32,
+	F64,
+	Arbitrary,
+}
 pub struct Parameters {
 	pub center_x: Float,
 	pub center_y: Float,

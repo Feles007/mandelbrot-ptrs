@@ -2,8 +2,8 @@ mod mandelbrot;
 mod parameters;
 mod screen_buffer;
 
-use crate::mandelbrot::Precision;
-use crate::parameters::Parameters;
+use crate::mandelbrot::{mandelbrot_f32, mandelbrot_f64, mandelbrot_precise};
+use crate::parameters::{Parameters, Precision};
 use crate::screen_buffer::ScreenBuffer;
 use macroquad::miniquad::conf::Platform;
 use macroquad::prelude::*;
@@ -30,9 +30,13 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
 	let mut parameters = Parameters {
-		center_x: Float::from(-1.5),
+		// F64 max precision
+		// center_x: Float::from(-1.5),
+		// center_y: Float::from(0.0),
+		// scale: Float::from(100000000000000.0),
+		center_x: Float::from(-0.5),
 		center_y: Float::from(0.0),
-		scale: Float::from(100000000000000.0),
+		scale: Float::from(1.0),
 		iterations: 1024,
 		precision: Precision::F64,
 	};
@@ -64,19 +68,22 @@ async fn main() {
 				let x = (index as u32) % width;
 				let y = (index as u32) / width;
 
-				let result = mandelbrot::run(
-					parameters.iterations,
-					x,
-					y,
-					width,
-					height,
-					extents,
-					parameters.precision,
-				);
+				let scaled_x = mix(extents.hmin, extents.hmax, (x as f64) / (width as f64));
+				let scaled_y = mix(extents.vmin, extents.vmax, (y as f64) / (height as f64));
 
-				pixel.r = result[0];
-				pixel.g = result[1];
-				pixel.b = result[2];
+				let i = match parameters.precision {
+					Precision::F32 => mandelbrot_f32(scaled_x as f32, scaled_y as f32, parameters.iterations),
+					Precision::F64 => mandelbrot_f64(scaled_x, scaled_y, parameters.iterations),
+					Precision::Arbitrary => {
+						mandelbrot_precise(Float::from(scaled_x), Float::from(scaled_y), parameters.iterations)
+					},
+				};
+
+				let color = get_color(parameters.iterations, i);
+
+				pixel.r = color[0];
+				pixel.g = color[1];
+				pixel.b = color[2];
 			});
 
 		screen_buffer.draw();
@@ -103,4 +110,47 @@ async fn main() {
 
 		next_frame().await;
 	}
+}
+fn mix(x: f64, y: f64, a: f64) -> f64 {
+	x * (1.0 - a) + y * a
+}
+fn get_color(iterations: u32, i: u32) -> [u8; 3] {
+	let h = mix(0.0, 359.0, (i as f64) / (iterations as f64));
+
+	let hp = h / 60.0;
+	let z = 1.0 - (hp % 2.0 - 1.0).abs();
+
+	let r;
+	let g;
+	let b;
+
+	if hp < 1.0 {
+		r = 1.0;
+		g = z;
+		b = 0.0;
+	} else if hp < 2.0 {
+		r = z;
+		g = 1.0;
+		b = 0.0;
+	} else if hp < 3.0 {
+		r = 0.0;
+		g = 1.0;
+		b = z;
+	} else if hp < 4.0 {
+		r = 0.0;
+		g = z;
+		b = 1.0;
+	} else if hp < 5.0 {
+		r = z;
+		g = 0.0;
+		b = 1.0;
+	} else
+	/*if (hp < 6.0)*/
+	{
+		r = 0.0;
+		g = 0.0;
+		b = z;
+	} // r 1->0
+
+	[(r * 255.999) as u8, (g * 255.999) as u8, (b * 255.999) as u8]
 }
