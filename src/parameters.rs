@@ -11,6 +11,7 @@ pub enum Precision {
 	F32,
 	F64,
 	Arbitrary,
+	Testing,
 }
 pub struct Parameters {
 	pub center_x: Float,
@@ -60,6 +61,8 @@ impl Parameters {
 			self.precision = Precision::F64;
 		} else if is_key_pressed(KeyCode::Key3) {
 			self.precision = Precision::Arbitrary;
+		} else if is_key_pressed(KeyCode::Key4) {
+			self.precision = Precision::Testing;
 		}
 	}
 	pub fn extents(&self, width: u32, height: u32) -> Extents {

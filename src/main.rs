@@ -2,15 +2,16 @@ mod mandelbrot;
 mod parameters;
 mod screen_buffer;
 
-use crate::mandelbrot::{mandelbrot_f32, mandelbrot_f64, mandelbrot_precise};
+use crate::mandelbrot::{mandelbrot_f32, mandelbrot_f64, mandelbrot_f64x4, mandelbrot_precise};
 use crate::parameters::{Parameters, Precision};
-use crate::screen_buffer::ScreenBuffer;
+use crate::screen_buffer::{Pixel, ScreenBuffer};
 use macroquad::miniquad::conf::Platform;
 use macroquad::prelude::*;
 use malachite::base::num::conversion::traits::RoundingFrom;
 use malachite::base::rounding_modes::RoundingMode;
 use malachite::Float;
 use rayon::prelude::*;
+use std::array;
 
 use mimalloc::MiMalloc;
 
@@ -60,31 +61,69 @@ async fn main() {
 		let height = screen_buffer.height();
 
 		let extents = parameters.extents(width, height);
-		screen_buffer
-			.buffer
-			.par_iter_mut()
-			.enumerate()
-			.for_each(|(index, pixel)| {
-				let x = (index as u32) % width;
-				let y = (index as u32) / width;
 
-				let scaled_x = mix(extents.hmin, extents.hmax, (x as f64) / (width as f64));
-				let scaled_y = mix(extents.vmin, extents.vmax, (y as f64) / (height as f64));
+		match parameters.precision {
+			Precision::Testing => {
+				screen_buffer
+					.buffer
+					.par_chunks_exact_mut(4)
+					.enumerate()
+					.for_each(|(index, pixels)| {
+						let pixels: &mut [Pixel; 4] = pixels.try_into().unwrap();
 
-				let i = match parameters.precision {
-					Precision::F32 => mandelbrot_f32(scaled_x as f32, scaled_y as f32, parameters.iterations),
-					Precision::F64 => mandelbrot_f64(scaled_x, scaled_y, parameters.iterations),
-					Precision::Arbitrary => {
-						mandelbrot_precise(Float::from(scaled_x), Float::from(scaled_y), parameters.iterations)
-					},
-				};
+						let xys: [_; 4] = array::from_fn(|i| {
+							let unroll_index = (index * 4 + i) as u32;
+							(unroll_index % width, unroll_index / width)
+						});
 
-				let color = get_color(parameters.iterations, i);
+						let sxys: [_; 4] = array::from_fn(|i| {
+							(
+								mix(extents.hmin, extents.hmax, (xys[i].0 as f64) / (width as f64)),
+								mix(extents.vmin, extents.vmax, (xys[i].1 as f64) / (height as f64)),
+							)
+						});
 
-				pixel.r = color[0];
-				pixel.g = color[1];
-				pixel.b = color[2];
-			});
+						let crs = array::from_fn(|i| sxys[i].0);
+						let cis = array::from_fn(|i| sxys[i].1);
+
+						let result = unsafe { mandelbrot_f64x4(crs, cis, parameters.iterations) };
+
+						let colors: [_; 4] = array::from_fn(|i| get_color(parameters.iterations, result[i]));
+
+						for i in 0..4 {
+							pixels[i].r = colors[i][0];
+							pixels[i].g = colors[i][1];
+							pixels[i].b = colors[i][2];
+						}
+					})
+			},
+			_ => screen_buffer
+				.buffer
+				.par_iter_mut()
+				.enumerate()
+				.for_each(|(index, pixel)| {
+					let x = (index as u32) % width;
+					let y = (index as u32) / width;
+
+					let scaled_x = mix(extents.hmin, extents.hmax, (x as f64) / (width as f64));
+					let scaled_y = mix(extents.vmin, extents.vmax, (y as f64) / (height as f64));
+
+					let iterations_result = match parameters.precision {
+						Precision::F32 => mandelbrot_f32(scaled_x as f32, scaled_y as f32, parameters.iterations),
+						Precision::F64 => mandelbrot_f64(scaled_x, scaled_y, parameters.iterations),
+						Precision::Arbitrary => {
+							mandelbrot_precise(Float::from(scaled_x), Float::from(scaled_y), parameters.iterations)
+						},
+						Precision::Testing => unreachable!(),
+					};
+
+					let color = get_color(parameters.iterations, iterations_result);
+
+					pixel.r = color[0];
+					pixel.g = color[1];
+					pixel.b = color[2];
+				}),
+		}
 
 		screen_buffer.draw();
 
