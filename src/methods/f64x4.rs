@@ -1,5 +1,5 @@
 use crate::parameters::{Extents, Parameters};
-use crate::screen_buffer::{Pixel, ScreenBuffer};
+use crate::screen_buffer::ScreenBuffer;
 use crate::{get_color, mix};
 use rayon::prelude::*;
 use std::arch::x86_64::*;
@@ -14,25 +14,20 @@ pub fn run(screen_buffer: &mut ScreenBuffer, parameters: &Parameters, extents: &
 		.par_chunks_exact_mut(4)
 		.enumerate()
 		.for_each(|(index, pixels)| {
-			let pixels: &mut [Pixel; 4] = pixels.try_into().unwrap();
-
-			let xys: [_; 4] = array::from_fn(|i| {
-				let unroll_index = (index * 4 + i) as u32;
-				(unroll_index % width, unroll_index / width)
-			});
-
 			let sxys: [_; 4] = array::from_fn(|i| {
+				let unroll_index = (index * 4 + i) as u32;
+				let x_a = ((unroll_index % width) as f64) / (width as f64);
+				let y_a = ((unroll_index / width) as f64) / (height as f64);
 				(
-					mix(extents.hmin, extents.hmax, (xys[i].0 as f64) / (width as f64)),
-					mix(extents.vmin, extents.vmax, (xys[i].1 as f64) / (height as f64)),
+					mix(extents.hmin, extents.hmax, x_a),
+					mix(extents.vmin, extents.vmax, y_a),
 				)
 			});
-
-			let crs = array::from_fn(|i| sxys[i].0);
-			let cis = array::from_fn(|i| sxys[i].1);
-
-			let result = unsafe { mandelbrot_f64x4(crs, cis, parameters.iterations) };
-
+			let result = unsafe {
+				let cr = _mm256_set_pd(sxys[0].0, sxys[1].0, sxys[2].0, sxys[3].0);
+				let ci = _mm256_set_pd(sxys[0].1, sxys[1].1, sxys[2].1, sxys[3].1);
+				mandelbrot_f64x4(cr, ci, parameters.iterations)
+			};
 			let colors: [_; 4] = array::from_fn(|i| get_color(parameters.iterations, result[i]));
 
 			for i in 0..4 {
@@ -42,11 +37,8 @@ pub fn run(screen_buffer: &mut ScreenBuffer, parameters: &Parameters, extents: &
 			}
 		});
 }
-unsafe fn mandelbrot_f64x4(cr: [f64; 4], ci: [f64; 4], iterations: u32) -> [u32; 4] {
+unsafe fn mandelbrot_f64x4(cr: __m256d, ci: __m256d, iterations: u32) -> [u32; 4] {
 	let all_fours = _mm256_set1_pd(4.0);
-
-	let cr = _mm256_set_pd(cr[0], cr[1], cr[2], cr[3]);
-	let ci = _mm256_set_pd(ci[0], ci[1], ci[2], ci[3]);
 
 	let mut x = _mm256_setzero_pd();
 	let mut y = _mm256_setzero_pd();

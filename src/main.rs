@@ -36,7 +36,7 @@ async fn main() {
 		center_y: Float::from(0.0),
 		scale: Float::from(1.0),
 		iterations: 1024,
-		method: Method::F64,
+		method: Method::Testing,
 	};
 
 	let float_precision = 1024;
