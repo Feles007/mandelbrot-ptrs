@@ -45,7 +45,7 @@ unsafe fn mandelbrot_f64x4(cr: __m256d, ci: __m256d, iterations: u32) -> [u32; 4
 
 	let mut iterations_result = _mm256_set1_epi64x(1);
 
-	let mut add_masked = _mm256_set1_epi64x(1);
+	let mut add_masked = _mm256_setzero_si256();
 
 	for _ in 0..iterations {
 		// Optimization: Break if the mask is empty
